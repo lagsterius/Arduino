@@ -77,10 +77,10 @@ byte len[] = {1, 3, 3, 3, 3, 3, 3, 3, 3, 3};
 boolean pic[4][8][8] = {{
   {1, 1, 1, 1, 1, 1, 1, 1},
   {1, 0, 0, 0, 0, 0, 0, 1},
-  {1, 0, 0, 1, 1, 1, 0, 1},
-  {1, 0, 1, 0, 0, 1, 0, 1},
-  {1, 0, 1, 1, 1, 1, 0, 1},
-  {1, 0, 1, 0, 0, 1, 0, 1},
+  {1, 0, 0, 0, 0, 0, 0, 1},
+  {1, 0, 0, 0, 0, 0, 0, 1},
+  {1, 0, 0, 0, 0, 0, 0, 1},
+  {1, 0, 0, 0, 0, 0, 0, 1},
   {1, 0, 0, 0, 0, 0, 0, 1},
   {1, 1, 1, 1, 1, 1, 1, 1}
 },
@@ -115,12 +115,23 @@ boolean pic[4][8][8] = {{
   {0, 0, 0, 0, 0, 0, 0, 0}
 }};
 
+bool cur_state[8][9] {
+  {1, 0, 0, 0, 0, 0, 0, 0, 0},
+  {1, 0, 0, 0, 0, 0, 0, 0, 0},
+  {1, 0, 0, 0, 0, 0, 0, 0, 0},
+  {1, 0, 0, 0, 0, 0, 0, 0, 0},
+  {1, 0, 0, 0, 0, 0, 0, 0, 0},
+  {1, 0, 0, 0, 0, 0, 0, 0, 0},
+  {1, 0, 0, 0, 0, 0, 0, 0, 0},
+  {1, 0, 0, 0, 0, 0, 0, 0, 0}
+};
+
 unsigned long curTime = 0;
 int k = 0;
-
+int dif = 1;
+int msgLen = 0;
+int msgSize = 0;
 void setup() {
-  
-  // put your setup code here, to run once:
   for (int i = 0; i < 8; i++) {
     pinMode(rows[i], OUTPUT);
     pinMode(columns[i], OUTPUT);
@@ -128,23 +139,30 @@ void setup() {
     digitalWrite(columns[i], false);
   }
 
-  char msg[] = "123";
+  char msg[] = "0123";
   
+  msgSize = (sizeof msg / sizeof msg[0]);
+  for (int i = 0; i < msgSize; i++)
+    msgLen += len[(int)msg[i] - 48];
+  msgLen += msgSize - 1;
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  for (int i = 0; i < 8; i++) {
-    for (int j = 0; j < 8; j++) {
-      lights(i, j, pic[k][i][j]);
-      if (curTime + 5000  > millis()) {
-        k = (k + 1) % 4;
-        curTime = millis();
-      }
-      //delay(300);
-      //if (i == 7) lights(7, j, true);
-    }
+      
+  if ((curTime + 300)  < millis()) {    
+    for (int i = 0; i < 8; i++)
+      for (int j = 8; j > 0; j--)
+        cur_state[i][j] = cur_state[i][j-1];
+
+    for (int j = 0; j < 8; j++)
+      cur_state[j][0] = cur_state[j][8];
+    
+    curTime = millis();
   }
+
+  for (int i = 0; i < 8; i++)
+    for (int j = 0; j < 8; j++)
+      lights(i, j, cur_state[i][j]);
 }
 
 void lights(int row, int column, boolean state) {
