@@ -72,66 +72,17 @@ boolean digit[10][5][3] = {{
   {1, 1, 1}
 }};
 
-byte len[] = {1, 3, 3, 3, 3, 3, 3, 3, 3, 3};
+//byte len[] = {1, 3, 3, 3, 3, 3, 3, 3, 3, 3};
 
-boolean pic[4][8][8] = {{
-  {1, 1, 1, 1, 1, 1, 1, 1},
-  {1, 0, 0, 0, 0, 0, 0, 1},
-  {1, 0, 0, 0, 0, 0, 0, 1},
-  {1, 0, 0, 0, 0, 0, 0, 1},
-  {1, 0, 0, 0, 0, 0, 0, 1},
-  {1, 0, 0, 0, 0, 0, 0, 1},
-  {1, 0, 0, 0, 0, 0, 0, 1},
-  {1, 1, 1, 1, 1, 1, 1, 1}
-},
-{
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 1, 1, 1, 1, 1, 1, 0},
-  {0, 1, 0, 0, 0, 0, 1, 0},
-  {0, 1, 0, 0, 0, 0, 1, 0},
-  {0, 1, 0, 0, 0, 0, 1, 0},
-  {0, 1, 0, 0, 0, 0, 1, 0},
-  {0, 1, 1, 1, 1, 1, 1, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0}
-},
-{
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 1, 1, 1, 1, 0, 0},
-  {0, 0, 1, 0, 0, 1, 0, 0},
-  {0, 0, 1, 0, 0, 1, 0, 0},
-  {0, 0, 1, 1, 1, 1, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0}
-},
-{
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 1, 1, 0, 0, 0},
-  {0, 0, 0, 1, 1, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0}
-}};
-
-bool cur_state[8][9] {
-  {1, 0, 0, 0, 0, 0, 0, 0, 0},
-  {1, 0, 0, 0, 0, 0, 0, 0, 0},
-  {1, 0, 0, 0, 0, 0, 0, 0, 0},
-  {1, 0, 0, 0, 0, 0, 0, 0, 0},
-  {1, 0, 0, 0, 0, 0, 0, 0, 0},
-  {1, 0, 0, 0, 0, 0, 0, 0, 0},
-  {1, 0, 0, 0, 0, 0, 0, 0, 0},
-  {1, 0, 0, 0, 0, 0, 0, 0, 0}
-};
+bool cur_state[8][8];
 
 unsigned long curTime = 0;
-int k = 0;
-int dif = 1;
-int msgLen = 0;
-int msgSize = 0;
+byte k, msgLen, msgSize, curPos;
+int curSpeed = 100;
+char msg[] = "18091996";
+
 void setup() {
+  //Serial.begin(9600);
   for (int i = 0; i < 8; i++) {
     pinMode(rows[i], OUTPUT);
     pinMode(columns[i], OUTPUT);
@@ -139,32 +90,40 @@ void setup() {
     digitalWrite(columns[i], false);
   }
 
-  char msg[] = "0123";
-  
-  msgSize = (sizeof msg / sizeof msg[0]);
-  for (int i = 0; i < msgSize; i++)
-    msgLen += len[(int)msg[i] - 48];
-  msgLen += msgSize - 1;
+  msgSize = (sizeof msg / sizeof msg[0]) - 1;
+  msgLen += 4 * msgSize;
 }
 
 void loop() {
       
-  if ((curTime + 300)  < millis()) {    
+  if ((curTime + curSpeed)  < millis()) {    
+    //Перенос текста на один столбец
     for (int i = 0; i < 8; i++)
-      for (int j = 8; j > 0; j--)
-        cur_state[i][j] = cur_state[i][j-1];
+      for (int j = 1; j < 7; j++)
+        cur_state[i][j] = cur_state[i][j+1];
+    
+    //Заполнение нового столбца
+    for (int j = 1; j < 6; j++)
+        cur_state[j][7] =
+          (curPos % 4 == 3) ? false : digit[(int)msg[curPos / 4] - 48][j-1][curPos % 4];
 
-    for (int j = 0; j < 8; j++)
-      cur_state[j][0] = cur_state[j][8];
+    curPos = (curPos + 1) % msgLen;
+    
+    //Выключение 1-й и 6-й строки, включение последней
+    cur_state[7][7] = true; 
+    cur_state[0][7] = false;
+    cur_state[6][7] = false;
     
     curTime = millis();
   }
 
+  //Включение матрицы
   for (int i = 0; i < 8; i++)
     for (int j = 0; j < 8; j++)
       lights(i, j, cur_state[i][j]);
 }
 
+//Зажигание светодиода с координатами (i, j)
 void lights(int row, int column, boolean state) {
   digitalWrite(rows[row], !state);
   digitalWrite(columns[column], state);
