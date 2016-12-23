@@ -77,8 +77,8 @@ boolean digit[10][5][3] = {{
 bool cur_state[8][8];
 
 unsigned long curTime = 0;
-byte k, msgLen, msgSize, curPos;
-int curSpeed = 100;
+byte msgLen, msgSize, curPos;
+int curSpeed = 500;
 char msg[] = "18091996";
 
 void setup() {
@@ -91,15 +91,15 @@ void setup() {
   }
 
   msgSize = (sizeof msg / sizeof msg[0]) - 1;
-  msgLen += 4 * msgSize;
+  msgLen = 4 * msgSize;
 }
 
 void loop() {
       
-  if ((curTime + curSpeed)  < millis()) {    
+  if ((curTime + curSpeed) < millis()) {    
     //Перенос текста на один столбец
     for (int i = 0; i < 8; i++)
-      for (int j = 1; j < 7; j++)
+      for (int j = 0; j < 7; j++)
         cur_state[i][j] = cur_state[i][j+1];
     
     //Заполнение нового столбца
@@ -109,8 +109,8 @@ void loop() {
 
     curPos = (curPos + 1) % msgLen;
     
-    //Выключение 1-й и 6-й строки, включение последней
-    cur_state[7][7] = true; 
+    //Выключение 1-й и 6-й строки, моргание последней
+    cur_state[7][7] = (curPos % 2) == 1; 
     cur_state[0][7] = false;
     cur_state[6][7] = false;
     
@@ -120,15 +120,17 @@ void loop() {
   //Включение матрицы
   for (int i = 0; i < 8; i++)
     for (int j = 0; j < 8; j++)
-      lights(i, j, cur_state[i][j]);
+      lights(i, j);
 }
 
 //Зажигание светодиода с координатами (i, j)
-void lights(int row, int column, boolean state) {
-  digitalWrite(rows[row], !state);
-  digitalWrite(columns[column], state);
-  digitalWrite(rows[(row + 8 - 1) % 8], true);
-  digitalWrite(columns[(column + 8 - 1) % 8], false);
+void lights(int r, int c) {
+  //Включение светодиода
+  digitalWrite(rows[r], !cur_state[r][c]);
+  digitalWrite(columns[c], cur_state[r][c]);
+  //Выключение предыдущего светодиода
+  digitalWrite(rows[(r + 8 - 1) % 8], true);
+  digitalWrite(columns[(c + 8 - 1) % 8], false);
 }
 
  
