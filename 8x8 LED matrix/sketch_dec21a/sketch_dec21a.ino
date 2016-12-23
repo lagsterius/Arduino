@@ -54,7 +54,7 @@ boolean digit[10][5][3] = {{
   {1, 1, 1},
   {0, 0, 1},
   {0, 0, 1},
-  {1, 1, 0},
+  {0, 1, 0},
   {1, 0, 0}
 },
 {
@@ -72,26 +72,32 @@ boolean digit[10][5][3] = {{
   {1, 1, 1}
 }};
 
-//byte len[] = {1, 3, 3, 3, 3, 3, 3, 3, 3, 3};
+byte digitLen[] = {3, 1, 3, 3, 3, 3, 3, 3, 3, 3};
 
 bool cur_state[8][8];
 
 unsigned long curTime = 0;
 byte msgLen, msgSize, curPos;
-int curSpeed = 500;
+int curSpeed = 800;
 char msg[] = "18091996";
 
 void setup() {
-  //Serial.begin(9600);
+  Serial.begin(9600);
   for (int i = 0; i < 8; i++) {
     pinMode(rows[i], OUTPUT);
     pinMode(columns[i], OUTPUT);
-    digitalWrite(rows[i], true);
-    digitalWrite(columns[i], false);
+    //digitalWrite(rows[i], true);
+    //digitalWrite(columns[i], false);
   }
 
   msgSize = (sizeof msg / sizeof msg[0]) - 1;
-  msgLen = 4 * msgSize;
+  msgLen = 4 * msgSize + 7;
+  //for (int i = 0; i < msgSize; i++) {
+    //msgLen += digitLen[(int)msg[i] - 48];
+    //Serial.print("Lenght of '" + (String)msg[i] + "' is " + digitLen[(int)msg[i] - 48] + "\n"); 
+  //}
+  //msgLen += 7 + msgSize;
+  Serial.print(msgLen);
 }
 
 void loop() {
@@ -111,13 +117,17 @@ void loop() {
     
     //Выключение 1-й и 6-й строки, моргание последней
     cur_state[7][7] = (curPos % 2) == 1; 
-    cur_state[0][7] = false;
-    cur_state[6][7] = false;
+    //cur_state[0][7] = false;
+    //cur_state[6][7] = false;
     
     curTime = millis();
   }
 
-  //Включение матрицы
+  matrixOn();
+}
+
+//Включение матрицы
+void matrixOn() {
   for (int i = 0; i < 8; i++)
     for (int j = 0; j < 8; j++)
       lights(i, j);
@@ -125,12 +135,12 @@ void loop() {
 
 //Зажигание светодиода с координатами (i, j)
 void lights(int r, int c) {
-  //Включение светодиода
-  digitalWrite(rows[r], !cur_state[r][c]);
-  digitalWrite(columns[c], cur_state[r][c]);
   //Выключение предыдущего светодиода
   digitalWrite(rows[(r + 8 - 1) % 8], true);
   digitalWrite(columns[(c + 8 - 1) % 8], false);
+  //Включение светодиода
+  digitalWrite(rows[r], !cur_state[r][c]);
+  digitalWrite(columns[c], cur_state[r][c]);
 }
 
  
