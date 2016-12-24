@@ -9,11 +9,11 @@ boolean digit[10][5][3] = {{
   {1, 1, 1}
 },
 {
-  {0, 0, 1},
-  {0, 0, 1},
-  {0, 0, 1},
-  {0, 0, 1},
-  {0, 0, 1}
+  {1, 0, 0},
+  {1, 0, 0},
+  {1, 0, 0},
+  {1, 0, 0},
+  {1, 0, 0}
 },
 {
   {1, 1, 1},
@@ -76,28 +76,18 @@ byte digitLen[] = {3, 1, 3, 3, 3, 3, 3, 3, 3, 3};
 
 bool cur_state[8][8];
 
-unsigned long curTime = 0;
-byte msgLen, msgSize, curPos;
-int curSpeed = 800;
-char msg[] = "18091996";
+unsigned long curTime;
+byte msgSize, curPos, curLetter, curWS, whiteSpace = 8;
+int curSpeed = 500;
+char msg[] = "18091996 26091992";
 
 void setup() {
-  Serial.begin(9600);
+  //Serial.begin(9600);
   for (int i = 0; i < 8; i++) {
     pinMode(rows[i], OUTPUT);
     pinMode(columns[i], OUTPUT);
-    //digitalWrite(rows[i], true);
-    //digitalWrite(columns[i], false);
   }
-
   msgSize = (sizeof msg / sizeof msg[0]) - 1;
-  msgLen = 4 * msgSize + 7;
-  //for (int i = 0; i < msgSize; i++) {
-    //msgLen += digitLen[(int)msg[i] - 48];
-    //Serial.print("Lenght of '" + (String)msg[i] + "' is " + digitLen[(int)msg[i] - 48] + "\n"); 
-  //}
-  //msgLen += 7 + msgSize;
-  Serial.print(msgLen);
 }
 
 void loop() {
@@ -111,12 +101,29 @@ void loop() {
     //Заполнение нового столбца
     for (int j = 1; j < 6; j++)
         cur_state[j][7] =
-          (curPos % 4 == 3) ? false : digit[(int)msg[curPos / 4] - 48][j-1][curPos % 4];
+          (curPos == digitLen[(int)msg[curLetter] - 48]) ? false : digit[(int)msg[curLetter] - 48][j-1][curPos];
 
-    curPos = (curPos + 1) % msgLen;
+    if (curPos == digitLen[(int)msg[curLetter] - 48]) {
+      if (curLetter == (msgSize - 1)) {
+        curWS++;
+        if (curWS == (whiteSpace - 1)) {
+          curLetter = 0;
+          curWS = 0;
+          curPos = 0;
+        }
+      }
+      else {
+        curPos = 0;
+        curLetter++;
+      }
+    }
+    else {
+      curPos++;
+    }
+    //curPos = (curPos + 1) % msgLen;
     
     //Выключение 1-й и 6-й строки, моргание последней
-    cur_state[7][7] = (curPos % 2) == 1; 
+    //cur_state[7][7] = (curPos % 2) == 1; 
     //cur_state[0][7] = false;
     //cur_state[6][7] = false;
     
